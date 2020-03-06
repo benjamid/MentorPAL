@@ -1,5 +1,5 @@
 PWD=$(shell pwd)
-DOCKER_IMAGE?=uscictdocker/mentor-pipeline:1.3.0
+DOCKER_IMAGE?=uscictdocker/mentor-pipeline:1.4.0-alpha.1
 DOCKER_CONTAINER=mentor-pipeline
 PROJECT_ROOT?=$(shell git rev-parse --show-toplevel 2> /dev/null)
 AWS_REGION?=us-east-1
@@ -42,11 +42,10 @@ VENV=.venv
 $(VENV):
 	$(MAKE) venv-create
 
-et:
-	@echo "DEV_TRANSCRIBE=$(DEV_TRANSCRIBE)"
+abs=$(shell d=$$(cd $$(dirname $(1)); pwd); f=$$(basename '$(1)') && echo "$${d}/$${f}")
 
-ev:
-	@echo "DOCKER_VOLUME_ARGS_DEV=$(DOCKER_VOLUME_ARGS_DEV)"
+a:
+	@echo $(call abs,~/projects/mentor-pipeline/mentor_pipeline)
 
 .PHONY: venv-create
 venv-create: virtualenv-installed
@@ -117,6 +116,30 @@ videos/mentors/%: data/mentors/%
 			-v $(PWD)/data:/app/mounts/data \
 			-v $(PWD)/videos:/app/mounts/videos \
 			$(DOCKER_IMAGE) videos-update --mentor $* --data=/app/mounts/data/mentors
+
+.PHONY: reduce-noise
+reduce-noise:
+	docker run \
+			--rm \
+			--name $(DOCKER_CONTAINER) \
+			-v $(call abs,~/projects/mentor-pipeline/mentor_pipeline):/app/mentor_pipeline \
+			-v $(call abs,/Users/kirschner/projects/mentor-pipeline/mentor_pipeline_runner.py):/app/mentor_pipeline_runner.py \
+			-v $(call abs,$(noiseroot)):/app/mounts/noise \
+			-v $(call abs,$(targetsroot)):/app/mounts/targets \
+			$(DOCKER_IMAGE) reduce-noise --noise /app/mounts/noise/$(noise) /app/mounts/targets/$(targets)
+
+.PHONY: reduce-noise-shell
+reduce-noise-shell:
+	docker run \
+			--rm \
+			-it \
+			--name $(DOCKER_CONTAINER) \
+			-v $(call abs,~/projects/mentor-pipeline/mentor_pipeline):/app/mentor_pipeline \
+			-v $(call abs,/Users/kirschner/projects/mentor-pipeline/mentor_pipeline_runner.py):/app/mentor_pipeline_runner.py \
+			-v $(call abs,$(noiseroot)):/app/mounts/noise \
+			-v $(call abs,$(targetsroot)):/app/mounts/targets \
+			--entrypoint /bin/bash \
+			$(DOCKER_IMAGE)
 
 # Build checkpoint from mentor data
 .PHONY: checkpoint/%
