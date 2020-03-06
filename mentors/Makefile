@@ -76,7 +76,6 @@ clean:
 	@for m in data/mentors/*/*; do $(MAKE) data/mentors/$${m}/clean; done
 	@for m in videos/*/*; do $(MAKE) videos/$${m}/clean; done
 
-
 # Runs a shell inside the data processing pipeline dockerfile
 .PHONY shell:
 shell:
@@ -99,7 +98,7 @@ data/mentors-%:
 			--rm \
 			--name $(DOCKER_CONTAINER) \
 			$(DOCKER_ARGS) \
-			$(DOCKER_IMAGE) --mentor $* --data-update --data=/app/mounts/data/mentors $(args)
+			$(DOCKER_IMAGE) data-update --mentor $* --data=/app/mounts/data/mentors $(args)
 
 .PHONY: data/topics_by_question.csv/mentor/%
 data/topics_by_question.csv/mentors/%:
@@ -107,7 +106,7 @@ data/topics_by_question.csv/mentors/%:
 			--rm \
 			--name $(DOCKER_CONTAINER) \
 			-v $(PWD)/data:/app/mounts/data \
-			$(DOCKER_IMAGE) --mentor $* --topics-by-question-generate --data=/app/mounts/data/mentors
+			$(DOCKER_IMAGE) topics-by-question-generate --mentor $* --data=/app/mounts/data/mentors
 
 
 .PHONY: videos/mentors/%
@@ -117,7 +116,7 @@ videos/mentors/%: data/mentors/%
 			--name $(DOCKER_CONTAINER) \
 			-v $(PWD)/data:/app/mounts/data \
 			-v $(PWD)/videos:/app/mounts/videos \
-			$(DOCKER_IMAGE) --mentor $* --videos-update --data=/app/mounts/data/mentors
+			$(DOCKER_IMAGE) videos-update --mentor $* --data=/app/mounts/data/mentors
 
 # Build checkpoint from mentor data
 .PHONY: checkpoint/%
